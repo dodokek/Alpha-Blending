@@ -95,4 +95,6 @@ ImgMainInfo BlendNoAvx (ImgMainInfo back, ImgMainInfo front);
 
 void LoadResultImg (ImgMainInfo& image, AllFileInfo general_header);
 
+ImgMainInfo BlendAvx (ImgMainInfo back, ImgMainInfo front);
+
 #endif
