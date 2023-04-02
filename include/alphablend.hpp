@@ -69,11 +69,10 @@ struct AllFileInfo
 
 struct ARGB
 {
+    unsigned char alpha;
     unsigned char red;
     unsigned char green;
     unsigned char blue;
-    unsigned char alpha;
-    
 };
 #pragma pack(pop)
 
@@ -81,8 +80,10 @@ struct ARGB
 
 const char BackgroundImgPath[] = "img/Table.bmp";
 const char ForegroundImgPath[] = "img/Cat.bmp";
-
 const char ResultImgPath[]     = "img/result.bmp";
+
+const int x_offset = 100;
+const int y_offset = 200;
 
 //--------------------------------------------------
 

@@ -12,14 +12,14 @@ void BlendMain()
     ImgMainInfo foreground_img = HandleBmpFile (ForegroundImgPath, &front_info);
 
     // for (int i = 0; i < 10000000; i++)
-    // {
+    {
         clock.restart();
         
-        result_img = BlendAvx (background_img, foreground_img);
+        result_img = BlendNoAvx (background_img, foreground_img);
         
         sf::Time elapsed_time = clock.getElapsedTime();
         printf ("kiloFrames per second: %.4f\n", 1/elapsed_time.asSeconds() / 100);
-    // }
+    }
 
     LoadResultImg (result_img, back_info);
 
@@ -41,32 +41,18 @@ ImgMainInfo BlendNoAvx (ImgMainInfo back, ImgMainInfo front)
     {
         for (uint32_t cur_y = 0; cur_y < front.height; cur_y++)
         {
-            uint32_t back_pixel = back.pixel_array[cur_x + cur_y * back.width];
-            uint32_t front_pixel = front.pixel_array[cur_x + cur_y * front.width];
-
-            backARGB.alpha = (unsigned char)   (back_pixel >> (8 * 3));
-            backARGB.red =   (unsigned char)   (back_pixel >> (8 * 2));
-            backARGB.green = (unsigned char)   (back_pixel >> (8 * 1));
-            backARGB.blue =  (unsigned char)   (back_pixel >> (8 * 0));
-
-            frontARGB.alpha = (unsigned char)   (front_pixel >> (8 * 3));
-            frontARGB.red =   (unsigned char)   (front_pixel >> (8 * 2));
-            frontARGB.green = (unsigned char)   (front_pixel >> (8 * 1));
-            frontARGB.blue =  (unsigned char)   (front_pixel >> (8 * 0));
-
+            ARGB* backARGB =  (ARGB*) (back.pixel_array + cur_x + cur_y * back.width);
+            ARGB* frontARGB = (ARGB*) (front.pixel_array + cur_x + cur_y * front.width);
             ARGB resultARGB = {};
             
-            resultARGB.alpha = backARGB.alpha;
-            resultARGB.red   =   ( backARGB.red   * backARGB.alpha + frontARGB.red   * (255 - backARGB.alpha) ) >> 8;
-            resultARGB.green =   ( backARGB.green * backARGB.alpha + frontARGB.green * (255 - backARGB.alpha) ) >> 8;
-            resultARGB.blue  =   ( backARGB.blue  * backARGB.alpha + frontARGB.blue  * (255 - backARGB.alpha) ) >> 8;
+            resultARGB.alpha = backARGB->alpha;
+            resultARGB.red   = ( backARGB->red   * backARGB->alpha + frontARGB->red   * (255 - backARGB->alpha) ) >> 8;
+            resultARGB.green = ( backARGB->green * backARGB->alpha + frontARGB->green * (255 - backARGB->alpha) ) >> 8;
+            resultARGB.blue  = ( backARGB->blue  * backARGB->alpha + frontARGB->blue  * (255 - backARGB->alpha) ) >> 8;
 
-
-            result_img.pixel_array[cur_x + cur_y * result_img.width * 3]  = ( resultARGB.alpha  << 3 * 8 ) +
-                                                                            ( resultARGB.red    << 2 * 8  ) +
-                                                                            ( resultARGB.green  << 1 * 8  ) + 
-                                                                            ( resultARGB.blue   << 0 * 8  );
-
+            result_img.pixel_array[cur_x + x_offset + (cur_y + y_offset) * result_img.width] = *((uint32_t*) &resultARGB);
+           
+            // printf ("Still alive x: %d, y: %d\n", cur_x, cur_y);
         }
     }
 
@@ -111,7 +97,7 @@ ImgMainInfo BlendAvx (ImgMainInfo back, ImgMainInfo front)
             FrontLow  = _mm_mullo_epi16 (FrontLow, AlphaL);    
             FrontHigh = _mm_mullo_epi16 (FrontHigh, AlphaH);   
 
-            BackLow  = _mm_mullo_epi16 (BackLow, _mm_sub_epi16 (_mm_set1_epi16(255), AlphaL));    
+            BackLow  = _mm_mullo_epi16 (BackLow,  _mm_sub_epi16 (_mm_set1_epi16(255), AlphaL));    
             BackHigh = _mm_mullo_epi16 (BackHigh, _mm_sub_epi16 (_mm_set1_epi16(255), AlphaH));  
 
             __m128i SumLow  = _mm_add_epi16 (FrontLow, BackLow);     
@@ -146,7 +132,6 @@ ImgMainInfo HandleBmpFile (const char* name, AllFileInfo* info_to_save)
     ARGB_info        argb_info = {};
 
     fseek (img_file, 0, SEEK_SET);
-
 
     // Reading all header information such as width height and 30 unneeded params
     fread (&header, 1, sizeof (header), img_file);
@@ -196,7 +181,6 @@ void LoadResultImg (ImgMainInfo& image, AllFileInfo general_header)
                                 sizeof (uint32_t), bmp_file);
 
     fclose(bmp_file);
-
 }
 
 
