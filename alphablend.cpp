@@ -2,6 +2,8 @@
 
 void BlendMain()
 {
+    sf::Clock clock; // starts the clock
+
     AllFileInfo back_info = {};
     AllFileInfo front_info = {};
     ImgMainInfo result_img = {};
@@ -9,7 +11,16 @@ void BlendMain()
     ImgMainInfo background_img = HandleBmpFile (BackgroundImgPath, &back_info);
     ImgMainInfo foreground_img = HandleBmpFile (ForegroundImgPath, &front_info);
 
-    result_img = BlendNoAvx (background_img, foreground_img);
+    // for (int i = 0; i < 10000000; i++)
+    // {
+        clock.restart();
+        
+        result_img = BlendNoAvx (background_img, foreground_img);
+        
+        sf::Time elapsed_time = clock.getElapsedTime();
+        printf ("kiloFrames per second: %.2f\n", 1/elapsed_time.asSeconds() / 1000);
+    // }
+
 
     LoadResultImg (result_img, back_info);
 
@@ -51,16 +62,21 @@ ImgMainInfo BlendNoAvx (ImgMainInfo back, ImgMainInfo front)
             resultARGB.blue  =   ( backARGB.blue  * backARGB.alpha + frontARGB.blue  * (255 - backARGB.alpha) ) >> 8;
 
 
-            result_img.pixel_array[cur_x + cur_y * result_img.width]  = (resultARGB.alpha  <<  3 * 8  ) +
-                                                                         (resultARGB.red    << 2 * 8  ) +
-                                                                         (resultARGB.green  << 1 * 8 ) + 
-                                                                         (resultARGB.blue   << 0 * 8 );
+            result_img.pixel_array[cur_x + cur_y * result_img.width * 3]  = ( resultARGB.alpha  << 3 * 8 ) +
+                                                                            ( resultARGB.red    << 2 * 8  ) +
+                                                                            ( resultARGB.green  << 1 * 8  ) + 
+                                                                            ( resultARGB.blue   << 0 * 8  );
 
         }
     }
 
-    return result_img;
-    
+    return result_img; 
+}
+
+
+ImgMainInfo BlendAvx (ImgMainInfo back, ImgMainInfo front)
+{
+
 }
 
 
