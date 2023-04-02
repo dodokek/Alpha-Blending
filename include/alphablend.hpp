@@ -64,6 +64,16 @@ struct AllFileInfo
     BitmapInfo   bitmap_info;
     ARGB_info    argb_info;
 };
+
+
+struct ARGB
+{
+    unsigned char red;
+    unsigned char green;
+    unsigned char blue;
+    unsigned char alpha;
+    
+};
 #pragma pack(pop)
 
 //--------------------------------------------------
@@ -80,9 +90,7 @@ ImgMainInfo HandleBmpFile (const char* name, AllFileInfo* info_to_save);
 
 void BlendMain();
 
-void dispBmpInfo(char *filename);
-
-void DisplayImage (ImgMainInfo image);
+ImgMainInfo BlendNoAvx (ImgMainInfo back, ImgMainInfo front);
 
 void LoadResultImg (ImgMainInfo& image, AllFileInfo general_header);
 

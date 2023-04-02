@@ -4,18 +4,64 @@ void BlendMain()
 {
     AllFileInfo back_info = {};
     AllFileInfo front_info = {};
+    ImgMainInfo result_img = {};
 
     ImgMainInfo background_img = HandleBmpFile (BackgroundImgPath, &back_info);
     ImgMainInfo foreground_img = HandleBmpFile (ForegroundImgPath, &front_info);
 
-    // DisplayImage (background_img);
+    result_img = BlendNoAvx (background_img, foreground_img);
 
-
-    LoadResultImg (background_img, back_info);
+    LoadResultImg (result_img, back_info);
 
 
     free (background_img.pixel_array);
     free (foreground_img.pixel_array);
+}
+
+
+ImgMainInfo BlendNoAvx (ImgMainInfo back, ImgMainInfo front)
+{
+    ImgMainInfo result_img = back;
+
+    ARGB frontARGB = {};
+    ARGB backARGB = {};
+
+    for (uint32_t cur_x = 0; cur_x < front.width; cur_x++)
+    {
+        for (uint32_t cur_y = 0; cur_y < front.height; cur_y++)
+        {
+            uint32_t back_pixel = back.pixel_array[cur_x + cur_y * back.width];
+            uint32_t front_pixel = front.pixel_array[cur_x + cur_y * front.width];
+
+            backARGB.alpha = (unsigned char)   (back_pixel >> (8 * 3));
+            backARGB.red =   (unsigned char)   (back_pixel >> (8 * 2));
+            backARGB.green = (unsigned char)   (back_pixel >> (8 * 1));
+            backARGB.blue =  (unsigned char)   (back_pixel >> (8 * 0));
+
+            frontARGB.alpha = (unsigned char)   (front_pixel >> (8 * 3));
+            frontARGB.red =   (unsigned char)   (front_pixel >> (8 * 2));
+            frontARGB.green = (unsigned char)   (front_pixel >> (8 * 1));
+            frontARGB.blue =  (unsigned char)   (front_pixel >> (8 * 0));
+
+            ARGB resultARGB = {};
+            
+            resultARGB.alpha = backARGB.alpha;
+            resultARGB.red   =   ( backARGB.red   * backARGB.alpha + frontARGB.red   * (255 - backARGB.alpha) ) >> 8;
+            resultARGB.green =   ( backARGB.green * backARGB.alpha + frontARGB.green * (255 - backARGB.alpha) ) >> 8;
+            resultARGB.blue  =   ( backARGB.blue  * backARGB.alpha + frontARGB.blue  * (255 - backARGB.alpha) ) >> 8;
+
+
+            // result_img.pixel_array[cur_x + cur_y * result_img.width]  = (resultARGB.alpha  << 3  ) +
+            //                                                             (resultARGB.red    << 2  ) +
+            //                                                             (resultARGB.green  << 1  ) + 
+            //                                                             (resultARGB.blue   << 0  );
+
+            result_img.pixel_array [cur_x + cur_y * result_img.width] = 0xFFFF0000;
+        }
+    }
+
+    return result_img;
+    
 }
 
 
@@ -82,20 +128,6 @@ void LoadResultImg (ImgMainInfo& image, AllFileInfo general_header)
 }
 
 
-void DisplayImage (ImgMainInfo image)
-{
 
-    for (uint32_t cur_x = 0; cur_x < image.width; cur_x++)
-    {
-        for (uint32_t cur_y = 0; cur_y < image.height; cur_y++)
-        {
-            uint32_t cur_pixel = image.pixel_array[cur_x + ( image.height - cur_y - 1 ) * image.width];
-
-            image.pixel_array[cur_x + cur_y * image.width] += 1;
-
-        }
-    }
-    
-}
 
 
