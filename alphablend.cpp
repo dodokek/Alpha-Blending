@@ -51,12 +51,11 @@ ImgMainInfo BlendNoAvx (ImgMainInfo back, ImgMainInfo front)
             resultARGB.blue  =   ( backARGB.blue  * backARGB.alpha + frontARGB.blue  * (255 - backARGB.alpha) ) >> 8;
 
 
-            // result_img.pixel_array[cur_x + cur_y * result_img.width]  = (resultARGB.alpha  << 3  ) +
-            //                                                             (resultARGB.red    << 2  ) +
-            //                                                             (resultARGB.green  << 1  ) + 
-            //                                                             (resultARGB.blue   << 0  );
+            result_img.pixel_array[cur_x + cur_y * result_img.width]  = (resultARGB.alpha  <<  3 * 8  ) +
+                                                                         (resultARGB.red    << 2 * 8  ) +
+                                                                         (resultARGB.green  << 1 * 8 ) + 
+                                                                         (resultARGB.blue   << 0 * 8 );
 
-            result_img.pixel_array [cur_x + cur_y * result_img.width] = 0xFFFF0000;
         }
     }
 
