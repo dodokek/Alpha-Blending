@@ -5,9 +5,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
+
 #pragma pack(push, 1)
 
-struct Header 
+struct BitmapHeader 
 {
     uint16_t file_type;
     uint32_t file_size;
@@ -43,10 +46,28 @@ struct  ARGB_info
 };
 
 
+struct ImgMainInfo
+{
+    uint32_t width;
+    uint32_t height;
+
+    uint32_t* pixel_array;
+};
+#pragma pack(pop)
+
+//--------------------------------------------------
+
+const char BackgroundImgPath[] = "img/sample.bmp";
+const char ForegroundImgPath[] = "img/Cat.bmp";
+
+//--------------------------------------------------
+
+
+ImgMainInfo HandleBmpFile (const char* name);
+
 void BlendMain();
 
 void dispBmpInfo(char *filename);
 
-#pragma pack(pop)
-
+void DisplayImage (sf::Image& canvas, ImgMainInfo image);
 #endif
