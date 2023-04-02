@@ -48,26 +48,42 @@ struct  ARGB_info
 
 struct ImgMainInfo
 {
+    uint32_t bi_size;
+    uint32_t size;
+    uint32_t offset;
+
     uint32_t width;
     uint32_t height;
 
     uint32_t* pixel_array;
 };
+
+struct AllFileInfo
+{
+    BitmapHeader bitmap_header;
+    BitmapInfo   bitmap_info;
+    ARGB_info    argb_info;
+};
 #pragma pack(pop)
 
 //--------------------------------------------------
 
-const char BackgroundImgPath[] = "img/sample.bmp";
+const char BackgroundImgPath[] = "img/Table.bmp";
 const char ForegroundImgPath[] = "img/Cat.bmp";
+
+const char ResultImgPath[]     = "img/result.bmp";
 
 //--------------------------------------------------
 
 
-ImgMainInfo HandleBmpFile (const char* name);
+ImgMainInfo HandleBmpFile (const char* name, AllFileInfo* info_to_save);
 
 void BlendMain();
 
 void dispBmpInfo(char *filename);
 
-void DisplayImage (sf::Image& canvas, ImgMainInfo image);
+void DisplayImage (ImgMainInfo image);
+
+void LoadResultImg (ImgMainInfo& image, AllFileInfo general_header);
+
 #endif
