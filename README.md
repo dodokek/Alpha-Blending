@@ -44,18 +44,22 @@ With optimization flag -O3 FPS rises **up to 400**.
 
 Let's test the rise in performance thanks to SSE instructions.
 
-| Version      | Compilation flags | FPS           |
-| ------      | :---------------: | :------------: | 
-| No SSE      | none              | 20             |  
-| No SSE      | -О3               | 60             |  
-| No SSE      | -Оfast            | 65             | 
-| SSE         | none              | 23             |  
-| SSE         | -О3               | 400            | 
-| SSE         | -Ofast            | 400            |
+| Version      | Compilation flags | FPS           | Speed Growth |
+| ------      | :---------------: | :------------: | :----------: |
+| No SSE      | none              | 20             |    0.3      |
+| No SSE      | -О3               | 60             |     1     |
+| No SSE      | -Оfast            | 65             |     1.08     |
+| SSE         | none              | 23             |      0.3    |
+| SSE         | -О3               | 400            |      6.5    |
+| SSE         | -Ofast            | 400            |      6.5    |
 
-As we can see, speed incresed **~8 times**. This confirms the effectivness of SSE instructions.
+As we can see, speed incresed **~6 times**. This confirms the effectivness of SSE instructions.
 
 ## Conclusion
+
+Calculating alpha-blending with SSE instructions is not so straightforward as basic algorithm. However we can see the tremendous rise in performance.
+
+
 
 
 
