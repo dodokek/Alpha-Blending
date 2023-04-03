@@ -1,5 +1,7 @@
 #include "include/alphablend.hpp"
 
+// #define NO_AVX
+
 void BlendMain()
 {
     sf::Clock clock; // starts the clock
@@ -11,11 +13,15 @@ void BlendMain()
     ImgMainInfo background_img = HandleBmpFile (BackgroundImgPath, &back_info);
     ImgMainInfo foreground_img = HandleBmpFile (ForegroundImgPath, &front_info);
 
-    // for (int i = 0; i < 10000000; i++)
+    while (true)
     {
         clock.restart();
         
-        result_img = BlendNoAvx (background_img, foreground_img);
+        #ifdef NO_AVX
+            result_img = BlendNoAvx (background_img, foreground_img);
+        #else
+            result_img = BlendAvx (background_img, foreground_img);
+        #endif
         
         sf::Time elapsed_time = clock.getElapsedTime();
         printf ("kiloFrames per second: %.4f\n", 1/elapsed_time.asSeconds() / 100);
@@ -46,9 +52,9 @@ ImgMainInfo BlendNoAvx (ImgMainInfo back, ImgMainInfo front)
             ARGB resultARGB = {};
             
             resultARGB.alpha = backARGB->alpha;
-            resultARGB.red   = ( backARGB->red   * backARGB->alpha + frontARGB->red   * (255 - backARGB->alpha) ) >> 8;
-            resultARGB.green = ( backARGB->green * backARGB->alpha + frontARGB->green * (255 - backARGB->alpha) ) >> 8;
-            resultARGB.blue  = ( backARGB->blue  * backARGB->alpha + frontARGB->blue  * (255 - backARGB->alpha) ) >> 8;
+            resultARGB.red   = ( backARGB->red   * backARGB->alpha + frontARGB->red   * (255 - frontARGB->alpha) ) >> 8;
+            resultARGB.green = ( backARGB->green * backARGB->alpha + frontARGB->green * (255 - frontARGB->alpha) ) >> 8;
+            resultARGB.blue  = ( backARGB->blue  * backARGB->alpha + frontARGB->blue  * (255 - frontARGB->alpha) ) >> 8;
 
             result_img.pixel_array[cur_x + x_offset + (cur_y + y_offset) * result_img.width] = *((uint32_t*) &resultARGB);
            
