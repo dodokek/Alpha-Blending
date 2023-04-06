@@ -46,6 +46,7 @@ struct  ARGB_info
     uint32_t reserved[16];
 };
 
+#pragma pack(pop)
 
 struct ImgMainInfo
 {
@@ -74,7 +75,6 @@ struct ARGB
     unsigned char green;
     unsigned char blue;
 };
-#pragma pack(pop)
 
 //--------------------------------------------------
 
@@ -82,20 +82,35 @@ const char BackgroundImgPath[] = "img/Table.bmp";
 const char ForegroundImgPath[] = "img/Cat.bmp";
 const char ResultImgPath[]     = "img/result.bmp";
 
-const int x_offset = 100;
+const int x_offset = 250;
 const int y_offset = 200;
+
+
+const int W_WIDTH = 800;
+const int W_HEIGHT = 600;
+
+
+enum RGB_INDEX
+{
+    RED = 0, 
+    GREEN,
+    BLUE,
+    ALPHA
+};
 
 //--------------------------------------------------
 
 
 ImgMainInfo HandleBmpFile (const char* name, AllFileInfo* info_to_save);
 
-void BlendMain();
+void BlendMain(sf::Image& foreground_img, sf::Image& background_img);
 
-ImgMainInfo BlendNoAvx (ImgMainInfo back, ImgMainInfo front);
+void BlendNoAvx (sf::Image& front, sf::Image& back);
 
 void LoadResultImg (ImgMainInfo& image, AllFileInfo general_header);
 
 ImgMainInfo BlendAvx (ImgMainInfo back, ImgMainInfo front);
+
+void DrawMain ();
 
 #endif

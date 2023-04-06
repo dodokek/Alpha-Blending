@@ -1,8 +1,48 @@
 #include "include/alphablend.hpp"
 
-// #define NO_AVX
+#define NO_AVX
 
-void BlendMain()
+void DrawMain ()
+{
+    sf::RenderWindow window(sf::VideoMode(W_WIDTH, W_HEIGHT), "Mandelbebra");
+    window.setFramerateLimit(30);
+
+    sf::Image canvas;
+    canvas.loadFromFile (BackgroundImgPath);
+
+    sf::Image foregorund;
+    foregorund.loadFromFile (ForegroundImgPath);
+
+    sf::Texture texture;
+    texture.loadFromImage( canvas );
+
+    sf::Sprite sprite;
+    sprite.setTexture( texture );
+    BlendMain (foregorund, canvas);
+
+    while (window.isOpen())
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+            {        
+                window.close();
+            }
+        }
+
+        
+        texture.update( canvas );
+        window.clear();
+        window.draw ( sprite );
+        window.display();
+    }
+
+}
+
+
+
+void BlendMain(sf::Image& foreground_img, sf::Image& background_img)
 {
     sf::Clock clock; // starts the clock
 
@@ -10,15 +50,12 @@ void BlendMain()
     AllFileInfo front_info = {};
     ImgMainInfo result_img = {};
 
-    ImgMainInfo background_img = HandleBmpFile (BackgroundImgPath, &back_info);
-    ImgMainInfo foreground_img = HandleBmpFile (ForegroundImgPath, &front_info);
-
-    while (true)
+    // while (true)
     {
         clock.restart();
         
         #ifdef NO_AVX
-            result_img = BlendNoAvx (background_img, foreground_img);
+            BlendNoAvx (foreground_img, background_img);
         #else
             result_img = BlendAvx (background_img, foreground_img);
         #endif
@@ -27,42 +64,42 @@ void BlendMain()
         printf ("kiloFrames per second: %.4f\n", 1/elapsed_time.asSeconds() / 100);
     }
 
-    LoadResultImg (result_img, back_info);
-
-
-
-    free (background_img.pixel_array);
-    free (foreground_img.pixel_array);
 }
 
 
-ImgMainInfo BlendNoAvx (ImgMainInfo back, ImgMainInfo front)
+void BlendNoAvx (sf::Image& front, sf::Image& back)
 {
-    ImgMainInfo result_img = back;
+    printf ("Front: %d, %d\n", front.getSize().x, front.getSize().y);
+    printf ("Back: %d, %d\n",back.getSize().x, back.getSize().y);
 
-    ARGB frontARGB = {};
-    ARGB backARGB = {};
+    uint32_t* background_pixels =  (uint32_t*) back.getPixelsPtr(); 
+    uint32_t* foreground_pixels =  (uint32_t*) front.getPixelsPtr(); 
 
-    for (uint32_t cur_x = 0; cur_x < front.width; cur_x++)
+    uint32_t front_w = front.getSize().x;
+    uint32_t front_h = front.getSize().y;
+
+    uint32_t back_w = back.getSize().x;
+    uint32_t back_h = back.getSize().y;
+
+    for (uint32_t cur_x = 0; cur_x < front_w; cur_x++)
     {
-        for (uint32_t cur_y = 0; cur_y < front.height; cur_y++)
+        for (uint32_t cur_y = 0; cur_y < front_h; cur_y++)
         {
-            ARGB* backARGB =  (ARGB*) (back.pixel_array + cur_x + cur_y * back.width);
-            ARGB* frontARGB = (ARGB*) (front.pixel_array + cur_x + cur_y * front.width);
-            ARGB resultARGB = {};
-            
-            resultARGB.alpha = backARGB->alpha;
-            resultARGB.red   = ( backARGB->red   * backARGB->alpha + frontARGB->red   * (255 - frontARGB->alpha) ) >> 8;
-            resultARGB.green = ( backARGB->green * backARGB->alpha + frontARGB->green * (255 - frontARGB->alpha) ) >> 8;
-            resultARGB.blue  = ( backARGB->blue  * backARGB->alpha + frontARGB->blue  * (255 - frontARGB->alpha) ) >> 8;
+                ARGB* fr_clr = (ARGB*) (foreground_pixels + cur_x + cur_y * front_w);
+                ARGB* bk_clr = (ARGB*) (background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w);
+                
+                ARGB new_clr = {};
 
-            result_img.pixel_array[cur_x + x_offset + (cur_y + y_offset) * result_img.width] = *((uint32_t*) &resultARGB);
-           
-            // printf ("Still alive x: %d, y: %d\n", cur_x, cur_y);
+                new_clr.alpha = bk_clr->alpha;
+                
+                new_clr.red   = (fr_clr->red    * fr_clr->alpha + bk_clr->red   * (255 - fr_clr->alpha)) >> 8;
+                new_clr.green = (fr_clr->green  * fr_clr->alpha + bk_clr->green * (255 - fr_clr->alpha)) >> 8;
+                new_clr.blue  = (fr_clr->blue   * fr_clr->alpha + bk_clr->blue  * (255 - fr_clr->alpha)) >> 8;
+
+                back.setPixel (cur_x + x_offset, cur_y + y_offset, sf::Color{new_clr.red, new_clr.green, new_clr.blue});
         }
-    }
 
-    return result_img; 
+    }
 }
 
 
@@ -80,7 +117,6 @@ ImgMainInfo BlendAvx (ImgMainInfo back, ImgMainInfo front)
             __m128i FrontLow = _mm_loadu_si128 ((__m128i*)(front.pixel_array + cur_y * front.width + cur_x));
             __m128i BackLow  = _mm_loadu_si128 ((__m128i*)(back.pixel_array + cur_y * back.width + cur_x));
         
-
         // Step 2 - Separatiog bytes to gain more space for multiplication
             __m128i FrontHigh = (__m128i) _mm_movehl_ps ((__m128) _0, (__m128) FrontLow);
             __m128i BackHigh  = (__m128i) _mm_movehl_ps ((__m128) _0, (__m128) BackLow);
@@ -136,6 +172,9 @@ ImgMainInfo HandleBmpFile (const char* name, AllFileInfo* info_to_save)
     BitmapHeader     header    = {};
     BitmapInfo       bitmap    = {};
     ARGB_info        argb_info = {};
+
+    // printf ("Header:%u, Bitmap: %u, Argv: %u\n",
+    //         sizeof(header), sizeof (bitmap), sizeof (argb_info));
 
     fseek (img_file, 0, SEEK_SET);
 
