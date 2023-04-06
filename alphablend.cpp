@@ -1,6 +1,6 @@
 #include "include/alphablend.hpp"
 
-#define NO_AVX
+// #define NO_AVX
 
 void DrawMain ()
 {
@@ -46,10 +46,6 @@ void BlendMain(sf::Image& foreground_img, sf::Image& background_img)
 {
     sf::Clock clock; // starts the clock
 
-    AllFileInfo back_info = {};
-    AllFileInfo front_info = {};
-    ImgMainInfo result_img = {};
-
     // while (true)
     {
         clock.restart();
@@ -57,7 +53,7 @@ void BlendMain(sf::Image& foreground_img, sf::Image& background_img)
         #ifdef NO_AVX
             BlendNoAvx (foreground_img, background_img);
         #else
-            result_img = BlendAvx (background_img, foreground_img);
+            BlendAvx (foreground_img, background_img);
         #endif
         
         sf::Time elapsed_time = clock.getElapsedTime();
@@ -85,43 +81,48 @@ void BlendNoAvx (sf::Image& front, sf::Image& back)
     {
         for (uint32_t cur_y = 0; cur_y < front_h; cur_y++)
         {
-                ARGB* fr_clr = (ARGB*) (foreground_pixels + cur_x + cur_y * front_w);
-                ARGB* bk_clr = (ARGB*) (background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w);
+                ARGB* front_color = (ARGB*) (foreground_pixels + cur_x + cur_y * front_w);
+                ARGB* back_color =  (ARGB*) (background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w);
                 
-                ARGB new_clr = {};
-
-                new_clr.alpha = bk_clr->alpha;
-                
-                new_clr.red   = (fr_clr->red    * fr_clr->alpha + bk_clr->red   * (255 - fr_clr->alpha)) >> 8;
-                new_clr.green = (fr_clr->green  * fr_clr->alpha + bk_clr->green * (255 - fr_clr->alpha)) >> 8;
-                new_clr.blue  = (fr_clr->blue   * fr_clr->alpha + bk_clr->blue  * (255 - fr_clr->alpha)) >> 8;
-
-                back.setPixel (cur_x + x_offset, cur_y + y_offset, sf::Color{new_clr.red, new_clr.green, new_clr.blue});
+                // back_color->alpha = back_color->alpha;
+                back_color->red   = (front_color->red    * front_color->alpha + back_color->red   * (255 - front_color->alpha)) >> 8;
+                back_color->green = (front_color->green  * front_color->alpha + back_color->green * (255 - front_color->alpha)) >> 8;
+                back_color->blue  = (front_color->blue   * front_color->alpha + back_color->blue  * (255 - front_color->alpha)) >> 8;
         }
 
     }
 }
 
 
-ImgMainInfo BlendAvx (ImgMainInfo back, ImgMainInfo front)
+void BlendAvx (sf::Image& front, sf::Image& back)
 {
-    __m128i _0 = _mm_set1_epi8 (0); 
-    ImgMainInfo result_img = back;
+    printf ("Front: %d, %d\n", front.getSize().x, front.getSize().y);
+    printf ("Back: %d, %d\n",back.getSize().x, back.getSize().y);
 
-    for (int cur_y = 0; cur_y < front.height; cur_y++)
+    __m128i _m_zero = _mm_set1_epi8 (0); 
+
+    uint32_t* background_pixels =  (uint32_t*) back.getPixelsPtr(); 
+    uint32_t* foreground_pixels =  (uint32_t*) front.getPixelsPtr(); 
+
+    uint32_t front_w = front.getSize().x;
+    uint32_t front_h = front.getSize().y;
+
+    uint32_t back_w = back.getSize().x;
+
+    for (int cur_x = 0; cur_x < front_w; cur_x += 4)
     {
-        for (int cur_x = 0; cur_x < front.width - 4; cur_x += 4)
+        for (int cur_y = 0; cur_y < front_h; cur_y++)
         {
 
         // Step 1 - Loading the values in vectors
-            __m128i FrontLow = _mm_loadu_si128 ((__m128i*)(front.pixel_array + cur_y * front.width + cur_x));
-            __m128i BackLow  = _mm_loadu_si128 ((__m128i*)(back.pixel_array + cur_y * back.width + cur_x));
+            __m128i FrontLow = _mm_loadu_si128 ((__m128i*)(foreground_pixels + cur_y * front_w + cur_x));
+            __m128i BackLow  = _mm_loadu_si128 ((__m128i*)(background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w));
         
         // Step 2 - Separatiog bytes to gain more space for multiplication
-            __m128i FrontHigh = (__m128i) _mm_movehl_ps ((__m128) _0, (__m128) FrontLow);
-            __m128i BackHigh  = (__m128i) _mm_movehl_ps ((__m128) _0, (__m128) BackLow);
+            __m128i FrontHigh = (__m128i) _mm_movehl_ps ((__m128) _m_zero, (__m128) FrontLow);
+            __m128i BackHigh  = (__m128i) _mm_movehl_ps ((__m128) _m_zero, (__m128) BackLow);
         
-        // Step 3 - Preparing bytes for multiplication
+        // Step 3 - Preparing bytes for multiplication by setting 1 byte space between 'em
             FrontLow  = _mm_cvtepi8_epi16 (FrontLow);
             FrontHigh = _mm_cvtepi8_epi16 (FrontLow);
 
@@ -154,13 +155,14 @@ ImgMainInfo BlendAvx (ImgMainInfo back, ImgMainInfo front)
 
             __m128i result = (__m128i) _mm_movelh_ps ((__m128) SumLow, (__m128) SumHigh);
 
-            _mm_storeu_si128 ((__m128i*) (result_img.pixel_array + cur_x + cur_y * result_img.width), result);
 
-            // printf ("Didn't die yet x:%d y:%d\n", cur_x, cur_y);
+            _mm_storeu_si128 ((__m128i*) (background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w), result);
+
+            // printf ("Hasn't died yet x:%d y:%d\n", cur_x, cur_y);
         }
+      
     }
 
-    return result_img;
 
 }
 

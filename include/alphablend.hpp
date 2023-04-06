@@ -107,9 +107,10 @@ void BlendMain(sf::Image& foreground_img, sf::Image& background_img);
 
 void BlendNoAvx (sf::Image& front, sf::Image& back);
 
+void BlendAvx (sf::Image& front, sf::Image& back);
+
 void LoadResultImg (ImgMainInfo& image, AllFileInfo general_header);
 
-ImgMainInfo BlendAvx (ImgMainInfo back, ImgMainInfo front);
 
 void DrawMain ();
 
