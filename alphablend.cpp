@@ -57,7 +57,7 @@ void BlendMain(sf::Image& foreground_img, sf::Image& background_img)
         #endif
         
         sf::Time elapsed_time = clock.getElapsedTime();
-        printf ("kiloFrames per second: %.4f\n", 1/elapsed_time.asSeconds() / 100);
+        printf ("Frames per second: %.4f\n", 1/elapsed_time.asSeconds());
     }
 
 }
@@ -65,8 +65,8 @@ void BlendMain(sf::Image& foreground_img, sf::Image& background_img)
 
 void BlendNoAvx (sf::Image& front, sf::Image& back)
 {
-    printf ("Front: %d, %d\n", front.getSize().x, front.getSize().y);
-    printf ("Back: %d, %d\n",back.getSize().x, back.getSize().y);
+    // printf ("Front: %d, %d\n", front.getSize().x, front.getSize().y);
+    // printf ("Back: %d, %d\n",back.getSize().x, back.getSize().y);
 
     uint32_t* background_pixels =  (uint32_t*) back.getPixelsPtr(); 
     uint32_t* foreground_pixels =  (uint32_t*) front.getPixelsPtr(); 
@@ -76,6 +76,9 @@ void BlendNoAvx (sf::Image& front, sf::Image& back)
 
     uint32_t back_w = back.getSize().x;
     uint32_t back_h = back.getSize().y;
+
+    // for (int i = 0; i < 1000; i++)
+    // {
 
     for (uint32_t cur_x = 0; cur_x < front_w; cur_x++)
     {
@@ -89,15 +92,17 @@ void BlendNoAvx (sf::Image& front, sf::Image& back)
                 back_color->green = (front_color->green  * front_color->alpha + back_color->green * (255 - front_color->alpha)) >> 8;
                 back_color->blue  = (front_color->blue   * front_color->alpha + back_color->blue  * (255 - front_color->alpha)) >> 8;
         }
-
     }
+
+    // }
+
 }
 
 
 void BlendAvx (sf::Image& front, sf::Image& back)
 {
-    printf ("Front: %d, %d\n", front.getSize().x, front.getSize().y);
-    printf ("Back: %d, %d\n",back.getSize().x, back.getSize().y);
+    // printf ("Front: %d, %d\n", front.getSize().x, front.getSize().y);
+    // printf ("Back: %d, %d\n",back.getSize().x, back.getSize().y);
 
     __m128i _m_zero = _mm_set1_epi8 (0); 
 
@@ -109,7 +114,10 @@ void BlendAvx (sf::Image& front, sf::Image& back)
 
     uint32_t back_w = back.getSize().x;
 
-    for (int cur_x = 0; cur_x < front_w; cur_x += 4)
+    // for (int i = 0; i < 1000; i++)
+    // {
+
+    for (int cur_x = 0; cur_x < front_w; cur_x += AVX_STEP)
     {
         for (int cur_y = 0; cur_y < front_h; cur_y++)
         {
@@ -162,6 +170,8 @@ void BlendAvx (sf::Image& front, sf::Image& back)
         }
       
     }
+
+    // }
 
 
 }
