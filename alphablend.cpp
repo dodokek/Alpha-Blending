@@ -78,7 +78,7 @@ void BlendNoAvx (sf::Image& front, sf::Image& back)
     uint32_t back_h = back.getSize().y;
 
     // for (int i = 0; i < 1000; i++)
-    // {
+    {
 
     for (uint32_t cur_x = 0; cur_x < front_w; cur_x++)
     {
@@ -94,7 +94,7 @@ void BlendNoAvx (sf::Image& front, sf::Image& back)
         }
     }
 
-    // }
+    }
 
 }
 
@@ -115,7 +115,7 @@ void BlendAvx (sf::Image& front, sf::Image& back)
     uint32_t back_w = back.getSize().x;
 
     // for (int i = 0; i < 1000; i++)
-    // {
+    {
 
     for (int cur_x = 0; cur_x < front_w; cur_x += AVX_STEP)
     {
@@ -123,36 +123,36 @@ void BlendAvx (sf::Image& front, sf::Image& back)
         {
 
         // Step 1 - Loading the values in vectors
-            __m128i FrontLow = _mm_loadu_si128 ((__m128i*)(foreground_pixels + cur_y * front_w + cur_x));
-            __m128i BackLow  = _mm_loadu_si128 ((__m128i*)(background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w));
+            __m128i ForegrL = _mm_loadu_si128 ((__m128i*)(foreground_pixels + cur_y * front_w + cur_x));
+            __m128i BackgrL  = _mm_loadu_si128 ((__m128i*)(background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w));
         
         // Step 2 - Separatiog bytes to gain more space for multiplication
-            __m128i FrontHigh = (__m128i) _mm_movehl_ps ((__m128) _m_zero, (__m128) FrontLow);
-            __m128i BackHigh  = (__m128i) _mm_movehl_ps ((__m128) _m_zero, (__m128) BackLow);
+            __m128i ForegrH = (__m128i) _mm_movehl_ps ((__m128) _m_zero, (__m128) ForegrL);
+            __m128i BackgrH  = (__m128i) _mm_movehl_ps ((__m128) _m_zero, (__m128) BackgrL);
         
         // Step 3 - Preparing bytes for multiplication by setting 1 byte space between 'em
-            FrontLow  = _mm_cvtepi8_epi16 (FrontLow);
-            FrontHigh = _mm_cvtepi8_epi16 (FrontLow);
+            ForegrL  = _mm_cvtepi8_epi16 (ForegrL);
+            ForegrH  = _mm_cvtepi8_epi16 (ForegrL);
 
-            BackLow  = _mm_cvtepi8_epi16 (BackLow);
-            BackHigh = _mm_cvtepi8_epi16 (BackHigh);
+            BackgrL  = _mm_cvtepi8_epi16 (BackgrL);
+            BackgrH  = _mm_cvtepi8_epi16 (BackgrH);
         
         // Step 4 - shuffling the alpha parametr
             __m128i shuffle_mask = _mm_set_epi8 (0x80, 14, 0x80, 14, 0x80, 14, 0x80, 14,
                                                  0x80,  6, 0x80,  6, 0x80,  6, 0x80,  6);
 
-            __m128i AlphaL  = _mm_shuffle_epi8 (FrontLow, shuffle_mask);
-            __m128i AlphaH = _mm_shuffle_epi8  (FrontHigh, shuffle_mask);
+            __m128i AlphaL  = _mm_shuffle_epi8 (ForegrL, shuffle_mask);
+            __m128i AlphaH  = _mm_shuffle_epi8 (ForegrH, shuffle_mask);
         
         // Step 5 - Multiplying on alpha
-            FrontLow  = _mm_mullo_epi16 (FrontLow, AlphaL);    
-            FrontHigh = _mm_mullo_epi16 (FrontHigh, AlphaH);   
+            ForegrL  = _mm_mullo_epi16 (ForegrL, AlphaL);    
+            ForegrH  = _mm_mullo_epi16 (ForegrH, AlphaH);   
 
-            BackLow  = _mm_mullo_epi16 (BackLow,  _mm_sub_epi16 (_mm_set1_epi16(255), AlphaL));    
-            BackHigh = _mm_mullo_epi16 (BackHigh, _mm_sub_epi16 (_mm_set1_epi16(255), AlphaH));  
+            BackgrL  = _mm_mullo_epi16 (BackgrL,  _mm_sub_epi16 (_mm_set1_epi16(255), AlphaL));    
+            BackgrH  = _mm_mullo_epi16 (BackgrH, _mm_sub_epi16 (_mm_set1_epi16(255), AlphaH));  
 
-            __m128i SumLow  = _mm_add_epi16 (FrontLow, BackLow);     
-            __m128i SumHigh = _mm_add_epi16 (FrontHigh, BackHigh);   
+            __m128i SumLow  = _mm_add_epi16 (ForegrL, BackgrL);     
+            __m128i SumHigh = _mm_add_epi16 (ForegrH, BackgrH);   
         
         // Step 6 - accumulation of results
             shuffle_mask = _mm_set_epi8 (0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 
@@ -161,6 +161,7 @@ void BlendAvx (sf::Image& front, sf::Image& back)
             SumLow  = _mm_shuffle_epi8 (SumLow,  shuffle_mask);
             SumHigh = _mm_shuffle_epi8 (SumHigh, shuffle_mask);
 
+        // Step 7 - Storing the result in SFML pixel array to draw it on the screen
             __m128i result = (__m128i) _mm_movelh_ps ((__m128) SumLow, (__m128) SumHigh);
 
 
@@ -171,74 +172,12 @@ void BlendAvx (sf::Image& front, sf::Image& back)
       
     }
 
-    // }
+    }
 
 
 }
 
 
-ImgMainInfo HandleBmpFile (const char* name, AllFileInfo* info_to_save)
-{
-    FILE* img_file = fopen (name, "rb");
-
-    BitmapHeader     header    = {};
-    BitmapInfo       bitmap    = {};
-    ARGB_info        argb_info = {};
-
-    // printf ("Header:%u, Bitmap: %u, Argv: %u\n",
-    //         sizeof(header), sizeof (bitmap), sizeof (argb_info));
-
-    fseek (img_file, 0, SEEK_SET);
-
-    // Reading all header information such as width height and 30 unneeded params
-    fread (&header, 1, sizeof (header), img_file);
-    fread (&bitmap, 1, sizeof (bitmap), img_file);
-    fread (&argb_info, 1, sizeof (argb_info), img_file);
-
-    printf ("File type: %x\n", header.file_type);
-
-    // Moving all important info to one struct
-    ImgMainInfo cur_img = {};
-
-    cur_img.bi_size = bitmap.bi_size;
-    cur_img.size    = header.file_size;
-    cur_img.offset  = header.file_size;
-    cur_img.height  = bitmap.bi_height;
-    cur_img.width   = bitmap.bi_width;
-
-    cur_img.pixel_array = (uint32_t*) calloc (cur_img.height * cur_img.width,
-                                              sizeof (uint32_t));
-
-    // Reading pixels array
-    int img_size = fread(cur_img.pixel_array, (size_t) (cur_img.width * cur_img.height), sizeof(uint32_t), img_file);
-
-    printf ("Successfully read BMP file \"%s\" "
-            "Width: %d, Height: %d\n", 
-            name, bitmap.bi_width, bitmap.bi_height);
-
-    fclose (img_file);
-
-    // Storing gmp params
-
-    info_to_save->bitmap_header = header;
-    info_to_save->bitmap_info = bitmap;
-    info_to_save->argb_info = argb_info;
-
-    return cur_img;
-}
-
-
-void LoadResultImg (ImgMainInfo& image, AllFileInfo general_header)
-{
-    FILE *bmp_file = fopen(ResultImgPath, "wb");
-   
-    fwrite (&general_header, 1, sizeof (general_header), bmp_file);
-
-    fwrite (image.pixel_array, (size_t) (image.width * image.height), 
-                                sizeof (uint32_t), bmp_file);
-
-    fclose(bmp_file);
-}
 
 
 
