@@ -37,7 +37,7 @@ I will add one internal cycle, to calculate one point 1000 times. This is going 
 > Assuming 800x600 foreground image size. 
 > System info: Core i5, 9th gen.
 
-**Average FPS: 9.6 +- 0.9**
+**Average FPS: 9.6 $\pm$ 0.9**
 
 ## Optimizing with SSE instructions
 
@@ -45,7 +45,7 @@ Each pixel is calculated independently. This means that we can calculate 4 of th
 
 The method I used to implement this algorithm includes a vast variety of bit manipulations. Because of them my code becomes much more complicated and bigger in size.
 
-However, we can see the **FPS counter jumps to 36.6 +- 1.6**
+However, we can see the **FPS counter jumps to 36.6 $\pm$ 1.6**
 
 >Lines of code increased *from 5 to 22*.
 
