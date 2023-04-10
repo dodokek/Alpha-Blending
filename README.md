@@ -29,7 +29,7 @@ blue  = ( blue_1  * alpha + blue_2  * (255 - alpha) ) >> 8;
 
 I will add one internal cycle, to calculate one point 1000 times. This is going to *lower the impact* of graphic library.
 
-> Assuming 800x600 foreground image size
+> Assuming 800x600 foreground image size. 
 > System info: Core i5, 9th gen.
 
 **Average FPS: 10**
