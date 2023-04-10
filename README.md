@@ -11,7 +11,7 @@ To maximize performance we are going to use SSE instructions.
 
 We want to mix two images together. Each pixel will be calculated according to this formula:
 
-$ColorNew_{red} = ColorBack_{red} * \alpha + ColorFront_{red} * (\alpha - 1)$ , where $\alpha$ varies between 0 and 1 
+$ColorNew_{red} = ColorBack_{red} * \alpha + ColorFront_{red} * (1 - \alpha)$ , where $\alpha$ varies between 0 and 1 
 
 The same goes for Green and Blue channels.
 ## First approach
