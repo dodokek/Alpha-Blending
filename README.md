@@ -65,7 +65,7 @@ Also there is negative growth in speed if we don't use optimization flags, becau
 
 SSE instructions allowed us to speed up the calculations *4 times*. However the amount of code became *4 times* bigger too.
 
-Once again great language C proved that **the more** code you write - **the faster** your programm becomes.
+Once again great language C proved that **the more** code you write - **the faster** your program becomes.
 
 
 
