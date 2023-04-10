@@ -117,18 +117,18 @@ void BlendAvx (sf::Image& front, sf::Image& back)
     // for (int i = 0; i < 1000; i++)
     {
 
-    for (int cur_x = 0; cur_x < front_w; cur_x += AVX_STEP)
+    for (int cur_x = 0; cur_x < front_w; cur_x += 4)
     {
         for (int cur_y = 0; cur_y < front_h; cur_y++)
         {
 
         // Step 1 - Loading the values in vectors
             __m128i ForegrL = _mm_loadu_si128 ((__m128i*)(foreground_pixels + cur_y * front_w + cur_x));
-            __m128i BackgrL  = _mm_loadu_si128 ((__m128i*)(background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w));
+            __m128i BackgrL = _mm_loadu_si128 ((__m128i*)(background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w));
         
-        // Step 2 - Separatiog bytes to gain more space for multiplication
+        // Step 2 - Separating bytes on halfs to gain more space for multiplication
             __m128i ForegrH = (__m128i) _mm_movehl_ps ((__m128) _m_zero, (__m128) ForegrL);
-            __m128i BackgrH  = (__m128i) _mm_movehl_ps ((__m128) _m_zero, (__m128) BackgrL);
+            __m128i BackgrH = (__m128i) _mm_movehl_ps ((__m128) _m_zero, (__m128) BackgrL);
         
         // Step 3 - Preparing bytes for multiplication by setting 1 byte space between 'em
             ForegrL  = _mm_cvtepi8_epi16 (ForegrL);
