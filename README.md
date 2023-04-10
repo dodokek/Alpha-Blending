@@ -3,7 +3,7 @@
 ## Overview
 
 
-The goal of this project is implementing Alpha Blending algorithm the most effecient way.
+The goal of this project is implementing Alpha Blending algorithm the most efficient way.
 
 To maximize performance we are going to use SSE instructions.
 
@@ -38,7 +38,7 @@ I will add one internal cycle, to calculate one point 1000 times. This is going 
 
 Each pixel is calculated independently. This means that we can calculate 4 of them at once with SSE instrucions.
 
-The method I used to implement this algorithm includes a vast variaty of bit manipulations. Because of them my code becomes much more complicated and bigger in size.
+The method I used to implement this algorithm includes a vast variety of bit manipulations. Because of them my code becomes much more complicated and bigger in size.
 
 However, we can see the **FPS counter jumps to 36**
 
@@ -59,7 +59,7 @@ Let's test the rise in performance.
 
 As we can see, speed incresed **~4 times**. This confirms the effectivness of SSE instructions.
 
-Also there is negative growth in speed if we don't use optimization flags, because of ineffecient usage of SIMD registers. 
+Also there is negative growth in speed if we don't use optimization flags, because of uneffecient usage of SIMD registers. 
 
 ## Conclusion
 
