@@ -7,6 +7,11 @@ The goal of this project is implementing Alpha Blending algorithm the most effic
 
 To maximize performance we are going to use SSE instructions.
 
+Example:
+
+<img src="https://user-images.githubusercontent.com/57039216/230920021-e88b8c77-fc0d-4bdc-b3f9-7a30d160c97f.png" width="500px">
+
+
 ## Alpha blending in a nutshell 
 
 We want to mix two images together. Each pixel will be calculated according to this formula:
@@ -32,7 +37,7 @@ I will add one internal cycle, to calculate one point 1000 times. This is going 
 > Assuming 800x600 foreground image size. 
 > System info: Core i5, 9th gen.
 
-**Average FPS: 10**
+**Average FPS: 9.6 +- 0.9**
 
 ## Optimizing with SSE instructions
 
@@ -40,7 +45,7 @@ Each pixel is calculated independently. This means that we can calculate 4 of th
 
 The method I used to implement this algorithm includes a vast variety of bit manipulations. Because of them my code becomes much more complicated and bigger in size.
 
-However, we can see the **FPS counter jumps to 36**
+However, we can see the **FPS counter jumps to 36.6 +- 1.6**
 
 >Lines of code increased *from 5 to 22*.
 
