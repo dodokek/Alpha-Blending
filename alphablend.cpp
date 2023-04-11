@@ -1,6 +1,6 @@
 #include "include/alphablend.hpp"
 
-// #define NO_AVX
+#define NO_AVX
 
 void DrawMain ()
 {
@@ -87,7 +87,7 @@ void BlendNoAvx (sf::Image& front, sf::Image& back)
                 ARGB* front_color = (ARGB*) (foreground_pixels + cur_x + cur_y * front_w);
                 ARGB* back_color =  (ARGB*) (background_pixels + cur_x + x_offset + (cur_y + y_offset) * back_w);
                 
-                // back_color->alpha = back_color->alpha;
+                // back_color->alpha = (front_color->alpha + back_color->alpha)/2;
                 back_color->red   = (front_color->red    * front_color->alpha + back_color->red   * (255 - front_color->alpha)) >> 8;
                 back_color->green = (front_color->green  * front_color->alpha + back_color->green * (255 - front_color->alpha)) >> 8;
                 back_color->blue  = (front_color->blue   * front_color->alpha + back_color->blue  * (255 - front_color->alpha)) >> 8;
@@ -132,7 +132,7 @@ void BlendAvx (sf::Image& front, sf::Image& back)
         
         // Step 3 - Preparing bytes for multiplication by setting 1 byte space between 'em
             ForegrL  = _mm_cvtepi8_epi16 (ForegrL);
-            ForegrH  = _mm_cvtepi8_epi16 (ForegrL);
+            ForegrH  = _mm_cvtepi8_epi16 (ForegrH);
 
             BackgrL  = _mm_cvtepi8_epi16 (BackgrL);
             BackgrH  = _mm_cvtepi8_epi16 (BackgrH);
